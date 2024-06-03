@@ -1,20 +1,38 @@
-
-
-
 import 'package:flutter_styled_toast/flutter_styled_toast.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:login_app/Home_screen.dart';
+import 'package:login_app/functions.dart';
+import 'package:login_app/model/user.dart';
+import 'package:login_app/screens/Home_screen.dart';
+import 'package:login_app/screens/Register_screen.dart';
 
-class Login_screen extends StatelessWidget {
-  TextEditingController cUsername=TextEditingController();
-  TextEditingController cPassword=TextEditingController();
-  String username= "Admin";
-  String password="hari123";
-  
-  
-
+class Login_screen extends StatefulWidget {
   static const routeName = "/loginScreen";
+
+  @override
+  State<Login_screen> createState() => _Login_screenState();
+}
+
+class _Login_screenState extends State<Login_screen> {
+  TextEditingController cUsername = TextEditingController();
+
+  TextEditingController cPassword = TextEditingController();
+  @override
+  void initState() {
+    // TODO: implement initState
+    getDetails();
+
+    super.initState();
+  }
+
+  void getDetails() async {
+    var users = await readUserDetails();
+    if (users[2] == true) {
+      Navigator.pushReplacementNamed(context, Home_screen.routeName,
+          arguments: {"username": users[0].toString(),
+           "password": ""});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,24 +78,38 @@ class Login_screen extends StatelessWidget {
                           borderSide: BorderSide(color: Colors.green)),
                       hintText: "Enter Passsword",
                       prefixIcon: Icon(Icons.password),
-                      suffixIcon: Icon (Icons.visibility)
-                      
-                      ),
+                      suffixIcon: Icon(Icons.visibility)),
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    if(cUsername.text.isNotEmpty && cPassword.text.isNotEmpty){
-                      if(cUsername.text==username && cPassword.text==password){
-                     Navigator.pushNamed(context, Home_screen.routeName,
-                     arguments: {"username":cUsername.text, "password":cPassword.text}
-                     );
-                      } else{
-                     showtoast("Invalid username or password", context);
-                    }} else{
-                      showtoast("Please enter username and password", context);
+                    if (allUsers.isEmpty) {
+                      showtoast("No user found, Creat account first",Colors.red, context);
+                      return;
+                    }
+
+                    if (cUsername.text.isNotEmpty &&
+                        cPassword.text.isNotEmpty) {
+                      allUsers.forEach((users) {
+                        String username = users.name;
+                        String password = users.password;
+                        if (cUsername.text == username &&
+                            cPassword.text == password) {
+                          Navigator.popAndPushNamed(
+                              context, Home_screen.routeName, arguments: {
+                            "username": cUsername.text,
+                            "password": cPassword.text
+                          });
+                          //TODO: Write save code.
+                          saveUserDetails(users);
+                        } else {
+                          showtoast("Invalid username or password", Colors.red, context);
+                        }
+                      });
+                    } else {
+                      showtoast("Please enter username and password", Colors.red, context);
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -92,10 +124,12 @@ class Login_screen extends StatelessWidget {
               Divider(),
               ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                     minimumSize: Size(200, 50),
+                      minimumSize: Size(200, 50),
                       backgroundColor: Colors.blue,
                       foregroundColor: Colors.white),
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.pushNamed(context, Register_screen.routeName);
+                  },
                   child: Text("Create new account"))
             ],
           ),
@@ -105,15 +139,12 @@ class Login_screen extends StatelessWidget {
   }
 }
 
-
-showtoast(String msg, BuildContext context){
-     showToast(msg,
-     context:context,
-                    isHideKeyboard: true,
-                    backgroundColor: Colors.red,
-                    axis: Axis.horizontal,
-                    alignment: Alignment.center,
-                    position: StyledToastPosition.bottom);
-                    
-
-                    }
+showtoast(String msg, Color color ,BuildContext context) {
+  showToast(msg,
+      context: context,
+      isHideKeyboard: true,
+      backgroundColor: color,
+      axis: Axis.horizontal,
+      alignment: Alignment.center,
+      position: StyledToastPosition.bottom);
+}
